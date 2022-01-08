@@ -10,6 +10,12 @@ const io = require("socket.io")(server, {
 const pty = require("node-pty");
 const jsonParser = require('body-parser').json();
 
+const logger = require('./winston');
+const morgan = require('morgan');
+const combined = ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"' 
+const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined; // NOTE: morgan 출력 형태 server.env에서 NODE_ENV 설정 production : 배포 dev : 개발
+console.log(morganFormat);
+
 const compiler = require("./compiler");
 const cleanUp = require("./file_manager").cleanUp;
 const { purifyPath, makeRunFormat, checkLanguage }  = require("./formatter");
@@ -18,6 +24,7 @@ const BASE_DIR = require("./constants").WORKSPACE_BASE;
 // TODO: redirect errors to log file
 app.use(require('cors')());
 app.use(jsonParser);
+app.use(morgan(morganFormat, {stream : logger.stream}));
 
 app.post("/compile", async (req, res) => {
     const dir = Math.random().toString(36).substr(2,11);
@@ -31,8 +38,11 @@ app.post("/compile", async (req, res) => {
             await cleanUp(dir);
         } catch (cleanupErr) {
             console.log(cleanupErr);
+            logger.error(cleanupErr);
         }
         console.log(err);
+        logger.error(err);
+
         res.send({"status": 0, "output": err});
     }
 })
@@ -65,6 +75,7 @@ io.on("connection", async(socket) => {
                         await cleanUp(dir);
                     } catch (err) {
                         console.log(err);
+                        logger.error(err);
                     } finally {
                         socket.emit("exited");
                         socket.disconnect();
@@ -74,10 +85,12 @@ io.on("connection", async(socket) => {
         }
     } catch (err) {
         console.log(err);
+        logger.error(err);
         socket.disconnect();
     }
 });
 
 server.listen(3000, () => {
     console.log("Server opened");
+    logger.info("Server Start Listening on port 3000");
 });
