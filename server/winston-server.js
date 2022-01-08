@@ -3,7 +3,7 @@ const winstonDaily = require('winston-daily-rotate-file');
 
 const { combine, timestamp, printf, colorize } = winston.format;
 
-const logDir = 'logs';
+const logDir = '../log/server';
 
 const logFormat = printf(info => {
     return `${info.timestamp} ${info.level}: ${info.message}`;
@@ -31,7 +31,7 @@ const logger = winston.createLogger({
         new winstonDaily({
             level: 'warn',
             datePattern: 'YYYY-MM-DD',
-            dirname: logDir+ '/warn', // save in /logs/warn
+            dirname: logDir, // save in /logs/warn
             filename: `%DATE%.warn.log`,
             maxFiles: 30, 
             zippedArchive: true, 
@@ -39,7 +39,7 @@ const logger = winston.createLogger({
         new winstonDaily({
             level: 'error',
             datePattern: 'YYYY-MM-DD',
-            dirname: logDir + '/error',  // save in /logs/error  
+            dirname: logDir,  // save in /logs/error  
             filename: `%DATE%.error.log`,
             maxFiles: 30,
             zippedArchive: true,

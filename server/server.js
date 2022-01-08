@@ -1,6 +1,8 @@
 const fs = require("fs");
-const app = require("express")();
+const express = require("express");
+const app = express();
 const server = require("http").createServer(app);
+
 const io = require("socket.io")(server, {
     cors: {
         origin: "*",
@@ -10,7 +12,9 @@ const io = require("socket.io")(server, {
 const pty = require("node-pty");
 const jsonParser = require('body-parser').json();
 
-const logger = require('./winston');
+const logger = require('./winston-server');
+const run_logger = require('./winston-run');
+const compile_logger = require('./winston-compile');
 const morgan = require('morgan');
 const combined = ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"' 
 const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined; // NOTE: morgan 출력 형태 server.env에서 NODE_ENV 설정 production : 배포 dev : 개발
@@ -24,7 +28,7 @@ const BASE_DIR = require("./constants").WORKSPACE_BASE;
 // TODO: redirect errors to log file
 app.use(require('cors')());
 app.use(jsonParser);
-app.use(morgan(morganFormat, {stream : logger.stream}));
+app.use( morgan(morganFormat, {stream : logger.stream}) );
 
 app.post("/compile", async (req, res) => {
     const dir = Math.random().toString(36).substr(2,11);
@@ -38,10 +42,10 @@ app.post("/compile", async (req, res) => {
             await cleanUp(dir);
         } catch (cleanupErr) {
             console.log(cleanupErr);
-            logger.error(cleanupErr);
+            compile_logger.error(cleanupErr);
         }
         console.log(err);
-        logger.error(err);
+        compile_logger.error(err);
 
         res.send({"status": 0, "output": err});
     }
@@ -61,10 +65,12 @@ io.on("connection", async(socket) => {
             const shell = pty.spawn("/usr/lib/judger/libjudger.so", makeRunFormat(dir, lang));
             shell.on('data', (data) => {
                 console.log("%s", data);
+                run_logger.info(data);
                 socket.emit("stdout", data);
             });
             socket.on("stdin", (input) => {
                 console.log("%s", input);
+                run_logger.info(data);
                 shell.write(input + "\n");
             });
             shell.on("exit", async(code) => {
@@ -75,7 +81,7 @@ io.on("connection", async(socket) => {
                         await cleanUp(dir);
                     } catch (err) {
                         console.log(err);
-                        logger.error(err);
+                        run_logger.error(err);
                     } finally {
                         socket.emit("exited");
                         socket.disconnect();
@@ -85,7 +91,7 @@ io.on("connection", async(socket) => {
         }
     } catch (err) {
         console.log(err);
-        logger.error(err);
+        run_logger.error(err);
         socket.disconnect();
     }
 });
