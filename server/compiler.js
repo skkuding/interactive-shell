@@ -2,7 +2,6 @@ const fs = require("fs").promises;
 const lang_config = require("./languages");
 const constants = require("./constants");
 const execSync = require("child_process").execSync;
-
 async function _compile(command) {
     try {
         execSync(command);
