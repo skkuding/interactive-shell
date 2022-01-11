@@ -21,4 +21,4 @@ RUN cd /server && npm install
 # HEALTHCHECK --interval=5s --retries=3 CMD python3 /code/service.py
 WORKDIR /server
 EXPOSE 3000
-ENTRYPOINT ["/server/entrypoint.sh"]
+ENTRYPOINT ["sh", "/server/entrypoint.sh"]
