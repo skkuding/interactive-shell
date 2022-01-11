@@ -16,7 +16,7 @@ module.exports = {
         "compile": {
             "src_name": "main.cpp",
             "exe_name": "main",
-            "compile_command": "/usr/bin/g++ -DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c++11 {src_path} -lm -o {exe_path}",
+            "compile_command": "/usr/bin/g++ -DONLINE_JUDGE -O2 -w -fmax-errors=3 -std=c++14 {src_path} -lm -o {exe_path}",
         },
         "run": {
             "command": "{exe_path}",
