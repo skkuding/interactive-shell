@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+COPY java_policy /etc
+
 ADD sandbox /sandbox
 RUN buildDeps='software-properties-common git libtool cmake python-dev python3-pip python-pip libseccomp-dev curl' && \
     apt-get update && apt-get install -y python python3 python-pkg-resources python3-pkg-resources $buildDeps && \
