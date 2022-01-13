@@ -55,7 +55,7 @@ export default {
           }
           this.stdout = ''
           this.stderr = ''
-          this.socket = io('http://localhost:8900', {
+          this.socket = io('http://localhost:40000', {
             reconnection: false, 
             query: {
               'token':this.dir, 
@@ -80,7 +80,7 @@ export default {
         },
         async compile () {
           try {
-            const res = await axios.post('http://localhost:8900/compile', {'lang': this.lang, 'code': this.code})
+            const res = await axios.post('http://localhost:40000/compile', {'lang': this.lang, 'code': this.code})
             console.log(res.data)
             this.stderr = ''
             if (res.data.status !== 1) {

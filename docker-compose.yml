@@ -1,8 +1,8 @@
 version: "3.8"
 services:
   coderunner:
-    image: coc0a25/coderunner:0.1
-    container_name: coderunner
+    image: coc0a25/code-runner:0.2
+    container_name: coderunner-dev
     restart: always
     cap_drop:
       - SETPCAP
@@ -16,4 +16,4 @@ services:
       - ./log/run:/log/run
       - ./log/server:/log/server
     ports:
-    - "0.0.0.0:8900:3000"
+    - "0.0.0.0:40000:3000"
