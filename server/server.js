@@ -12,23 +12,28 @@ const io = require("socket.io")(server, {
 const pty = require("node-pty");
 const jsonParser = require('body-parser').json();
 
-const logger = require('./winston-server');
-const run_logger = require('./winston-run');
-const compile_logger = require('./winston-compile');
+const logging = require('./winston');
+// const run_logger = require('./winston-run');
+// const compile_logger = require('./winston-compile');
 const morgan = require('morgan');
 const combined = ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"' 
-const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined; // NOTE: morgan 출력 형태 server.env에서 NODE_ENV 설정 production : 배포 dev : 개발
-console.log(morganFormat);
+const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined;
+// morgan 출력 형태 server.env에서 NODE_ENV 설정 production : 배포 dev : 개발
 
 const compiler = require("./compiler");
 const cleanUp = require("./file_manager").cleanUp;
 const { purifyPath, makeRunFormat, checkLanguage }  = require("./formatter");
 const BASE_DIR = require("./constants").WORKSPACE_BASE;
 
+let server_logger = new logging("server")
+let compile_logger = new logging("compile")
+let run_logger = new logging("run")
+
 // TODO: redirect errors to log file
 app.use(require('cors')());
 app.use(jsonParser);
-app.use( morgan(morganFormat, {stream : logger.stream}) );
+
+app.use( morgan(morganFormat, {stream : server_logger.stream}) );
 
 app.post("/compile", async (req, res) => {
     const dir = Math.random().toString(36).substr(2,11);
@@ -98,5 +103,5 @@ io.on("connection", async(socket) => {
 
 server.listen(3000, () => {
     console.log("Server opened");
-    logger.info("Server Start Listening on port 3000");
+    server_logger.info("Server Start Listening on port 3000");
 });
