@@ -13,8 +13,6 @@ const pty = require("node-pty");
 const jsonParser = require('body-parser').json();
 
 const logging = require('./winston');
-// const run_logger = require('./winston-run');
-// const compile_logger = require('./winston-compile');
 const morgan = require('morgan');
 const combined = ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"' 
 const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined;
@@ -32,6 +30,7 @@ let run_logger = new logging("run")
 // TODO: redirect errors to log file
 app.use(require('cors')());
 app.use(jsonParser);
+app.use( morgan(morganFormat, {stream : logger.stream}) );
 
 app.use( morgan(morganFormat, {stream : server_logger.stream}) );
 
