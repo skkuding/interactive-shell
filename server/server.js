@@ -69,12 +69,10 @@ io.on("connection", async(socket) => {
             const shell = pty.spawn("/usr/lib/judger/libjudger.so", makeRunFormat(dir, lang));
             shell.on('data', (data) => {
                 console.log("%s", data);
-                run_logger.info(data);
                 socket.emit("stdout", data);
             });
             socket.on("stdin", (input) => {
                 console.log("%s", input);
-                run_logger.info(data);
                 shell.write(input + "\n");
             });
             shell.on("exit", async(code) => {
