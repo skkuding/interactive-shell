@@ -30,7 +30,6 @@ let run_logger = new logging("run")
 // TODO: redirect errors to log file
 app.use(require('cors')());
 app.use(jsonParser);
-app.use( morgan(morganFormat, {stream : logger.stream}) );
 
 app.use( morgan(morganFormat, {stream : server_logger.stream}) );
 
@@ -45,10 +44,8 @@ app.post("/compile", async (req, res) => {
         try {
             await cleanUp(dir);
         } catch (cleanupErr) {
-            console.log(cleanupErr);
             compile_logger.error(cleanupErr);
         }
-        console.log(err);
         compile_logger.error(err);
 
         res.send({"status": 0, "output": err});
@@ -82,7 +79,6 @@ io.on("connection", async(socket) => {
                     try {
                         await cleanUp(dir);
                     } catch (err) {
-                        console.log(err);
                         run_logger.error(err);
                     } finally {
                         socket.emit("exited");
@@ -92,7 +88,6 @@ io.on("connection", async(socket) => {
             });
         }
     } catch (err) {
-        console.log(err);
         run_logger.error(err);
         socket.disconnect();
     }
