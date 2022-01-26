@@ -6,4 +6,4 @@ mkdir -p /log
 chown compiler:server /code
 chmod 711 /code
 
-exec node server.js
+exec node server.js -s "$(cat /dev/urandom | head -1 | md5sum | head -c 10)"

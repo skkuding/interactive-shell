@@ -14,6 +14,7 @@ const jsonParser = require('body-parser').json();
 const expSession = require("express-session");
 const ioSession = require("express-socket.io-session");
 const rateLimit = require("rate-limiter-flexible");
+const nopt = require("nopt");
 
 const logging = require('./winston');
 const morgan = require('morgan');
@@ -30,6 +31,14 @@ let server_logger = new logging("server")
 let compile_logger = new logging("compile")
 let run_logger = new logging("run")
 
+const longOpts = {
+    "sessionSecret": String,
+}
+const shortOpts = {
+    "s": ["--sessionSecret"],
+}
+const parsed = nopt(longOpts, shortOpts, process.argv, 2)
+
 const socketLimiter = new rateLimit.RateLimiterMemory({
     points: 20, // Limit each sessionID to 20 requests
     duration: 60, // For 1 minute
@@ -39,7 +48,7 @@ const compileLimiter = new rateLimit.RateLimiterMemory({
     duration: 60, // For 1 minute
 });
 const session = expSession({
-    secret: "secretKey",
+    secret: parsed.sessionSecret,
     resave: false,
     saveUninitialized: true
 });
@@ -61,9 +70,7 @@ app.post("/compile", async (req, res) => {
 
     try {
         await compileLimiter.consume(req.sessionID);
-        console.log("compile success" + req.sessionID + "\n");
     } catch (err) {
-        console.log("too many request"+req.sessionID+"\n");
         return res.status(429).send("Too many requests");
     }
 
