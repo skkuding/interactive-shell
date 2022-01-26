@@ -30,7 +30,11 @@ let server_logger = new logging("server")
 let compile_logger = new logging("compile")
 let run_logger = new logging("run")
 
-const limiter = new rateLimit.RateLimiterMemory({
+const socketLimiter = new rateLimit.RateLimiterMemory({
+    points: 20, // Limit each sessionID to 20 requests
+    duration: 60, // For 1 minute
+});
+const compileLimiter = new rateLimit.RateLimiterMemory({
     points: 20, // Limit each sessionID to 20 requests
     duration: 60, // For 1 minute
 });
@@ -54,6 +58,15 @@ app.post("/compile", async (req, res) => {
     const dir = Math.random().toString(36).substr(2,11);
     const lang = req.body.lang;
     const code = req.body.code;
+
+    try {
+        await compileLimiter.consume(req.sessionID);
+        console.log("compile success" + req.sessionID + "\n");
+    } catch (err) {
+        console.log("too many request"+req.sessionID+"\n");
+        return res.status(429).send("Too many requests");
+    }
+
     try {
         await compiler.compile(dir, lang, code);
         res.send({"status": 1, "output": dir});
@@ -78,7 +91,7 @@ io.on("connection", async(socket) => {
 
     //Check Rate Limit socket connection request
     try {
-        await limiter.consume(sid);
+        await socketLimiter.consume(sid);
     } catch (err) {
         socket.emit('stdout', "too many request");
         try {
