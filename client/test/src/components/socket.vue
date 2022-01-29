@@ -71,7 +71,7 @@ export default {
               this.stdout += output
             }
           })
-          this.socket.on('exited', () => {
+          this.socket.on('disconnect', () => {
             console.log("program exited");
           })
         },
