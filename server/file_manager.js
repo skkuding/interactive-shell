@@ -1,13 +1,12 @@
-const fs = require("fs");
-const BASE_DIR = require("./constants").WORKSPACE_BASE;
+import { promises as fs } from "fs";
+import { systemLogger } from './logger.js';
+import { WORKSPACE_BASE } from "./constants.js";
 
-async function cleanUp(dir) {
-    var _dir = BASE_DIR + dir
+export async function cleanUp(directory) {
+    const dir = WORKSPACE_BASE + directory
     try {
-        await fs.promises.rm(_dir, { recursive: true, force: true });
+        await fs.rm(dir, { recursive: true, force: true });
     } catch (err) {
-        throw err;
+        systemLogger.error(err.name + ": " + err.message)
     }
 }
-
-module.exports = {cleanUp}

@@ -1,23 +1,23 @@
-const winston = require('winston') ;
-const WinstonDaily = require('winston-daily-rotate-file')
-const path = require("path")
+import format from 'winston';
+import WinstonDaily from 'winston-daily-rotate-file';
+import path from "path";
 
-const { combine, timestamp, printf, colorize, label } = winston.format;
+const { combine, timestamp, printf } = format.format;
 
-const serverDir = path.join(__dirname, '..', '/log/server');
-const compileDir = path.join(__dirname, '..', '/log/compile');
-const runDir = path.join(__dirname, '..', '/log/run');
-const systemDir = path.join(__dirname, '..', '/log/system')
+const SERVER_DIRECTORY = path.resolve('../log/server');
+const COMPILE_DIRECTORY = path.resolve('../log/compile');
+const RUN_DIRECTORY = path.resolve('../log/run');
+const SYSTEM_DIRECTORY = path.resolve('../log/system');
 /*
  * Log Level
  * error: 0, warn: 1, info: 2, http: 3, verbose: 4, debug: 5, silly: 6
  */
 
-module.exports = class Logger {
+class Logger {
     constructor(route) {
         this.route = route
         if(this.route === 'server'){
-            this.logger = winston.createLogger({
+            this.logger = format.createLogger({
                 format: combine(
                     timestamp({format:'YYYY-MM-DD HH:mm:ss'}),
                     printf(info => `[${info.timestamp}] - [${info.level}] - ${info.message}`)
@@ -26,7 +26,7 @@ module.exports = class Logger {
                     new WinstonDaily({
                         level: 'info',
                         datePattern: 'YYYY-MM-DD',
-                        filename: serverDir + '/%DATE%.log',
+                        filename: SERVER_DIRECTORY + '/%DATE%.log',
                         maxFiles: 30,
                         zippedArchive: false
                     }),
@@ -34,7 +34,7 @@ module.exports = class Logger {
             });
         }
         if(this.route === 'compile'){
-            this.logger = winston.createLogger({
+            this.logger = format.createLogger({
                 format: combine(
                     timestamp({format:'YYYY-MM-DD HH:mm:ss'}),
                     printf(info => `[${info.timestamp}] - [${info.level}] - ${info.message}`)
@@ -43,7 +43,7 @@ module.exports = class Logger {
                     new WinstonDaily({
                         level: 'info',
                         datePattern: 'YYYY-MM-DD',
-                        filename: compileDir + '/%DATE%.log',
+                        filename: COMPILE_DIRECTORY + '/%DATE%.log',
                         maxFiles: 30,
                         zippedArchive: false
                     }),
@@ -51,7 +51,7 @@ module.exports = class Logger {
             });
         }
         if(this.route === 'run'){
-            this.logger = winston.createLogger({
+            this.logger = format.createLogger({
                 format: combine(
                     timestamp({format:'YYYY-MM-DD HH:mm:ss'}),
                     printf(info => `[${info.timestamp}] - [${info.level}] - ${info.message}`)
@@ -60,7 +60,7 @@ module.exports = class Logger {
                     new WinstonDaily({
                         level: 'info',
                         datePattern: 'YYYY-MM-DD',
-                        filename: runDir + '/%DATE%.log',
+                        filename: RUN_DIRECTORY + '/%DATE%.log',
                         maxFiles: 30,
                         zippedArchive: false
                     }),
@@ -68,7 +68,7 @@ module.exports = class Logger {
             });
         }
         if(this.route === 'system'){
-            this.logger = winston.createLogger({
+            this.logger = format.createLogger({
                 format: combine(
                     timestamp({format:'YYYY-MM-DD HH:mm:ss'}),
                     printf(info => `[${info.timestamp}] - [${info.level}] - ${info.message}`)
@@ -77,7 +77,7 @@ module.exports = class Logger {
                     new WinstonDaily({
                         level: 'info',
                         datePattern: 'YYYY-MM-DD',
-                        filename: systemDir + '/%DATE%.log',
+                        filename: SYSTEM_DIRECTORY + '/%DATE%.log',
                         maxFiles: 30,
                         zippedArchive: false
                     }),
@@ -92,16 +92,23 @@ module.exports = class Logger {
         } 
     }
 
-    async info(message){
+    info(message){
         this.logger.info(message)
     }
-    async debug(message){
+    debug(message){
         this.logger.debug(message)
     }
-    async warn(message){
+    warn(message){
         this.logger.warn(message)
     }
-    async error(message){
+    error(message){
         this.logger.error(message)
     }
 }
+
+export const serverLogger = new Logger("server")
+export const compileLogger = new Logger("compile")
+export const runLogger = new Logger("run")
+export const systemLogger = new Logger("system")
+
+export default {serverLogger, compileLogger, runLogger, systemLogger}

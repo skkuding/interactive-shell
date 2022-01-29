@@ -1,35 +1,31 @@
-const fs = require("fs");
-const express = require("express");
+import express from "express";
+import { createServer } from "http"
+import { Server as socketServer } from "socket.io"
 const app = express();
-const server = require("http").createServer(app);
+const server = createServer(app);
 
-const io = require("socket.io")(server, {
+const socketConnection = new socketServer(server, {
     cors: {
         origin: "http://localhost:8080",
         credentials: true
     }
 });
-const pty = require("node-pty");
-const jsonParser = require('body-parser').json();
-const expSession = require("express-session");
-const ioSession = require("express-socket.io-session");
-const rateLimit = require("rate-limiter-flexible");
-const nopt = require("nopt");
+import { spawn } from "node-pty";
+import bodyParser from 'body-parser'
+import expSession from "express-session";
+import ioSession from "express-socket.io-session";
+import { RateLimiterMemory } from "rate-limiter-flexible";
+import nopt from "nopt";
 
-const logging = require('./winston');
-const morgan = require('morgan');
+import morgan from 'morgan';
 const combined = ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
 const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined;
 // morgan 출력 형태 server.env에서 NODE_ENV 설정 production : 배포 dev : 개발
 
-const compiler = require("./compiler");
-const cleanUp = require("./file_manager").cleanUp;
-const { purifyPath, makeRunFormat, checkLanguage }  = require("./formatter");
-const BASE_DIR = require("./constants").WORKSPACE_BASE;
-
-let server_logger = new logging("server")
-let compile_logger = new logging("compile")
-let run_logger = new logging("run")
+import { cleanUp } from "./file_manager.js";
+import compiler from "./compiler.js";
+import { purifyPath, makeRunFormat, checkLanguage } from "./formatter.js";
+import { serverLogger, compileLogger, runLogger } from './logger.js';
 
 const longOpts = {
     "sessionSecret": String,
@@ -39,11 +35,11 @@ const shortOpts = {
 }
 const parsed = nopt(longOpts, shortOpts, process.argv, 2)
 
-const socketLimiter = new rateLimit.RateLimiterMemory({
+const socketLimiter = new RateLimiterMemory({
     points: 20, // Limit each sessionID to 20 requests
     duration: 60, // For 1 minute
 });
-const compileLimiter = new rateLimit.RateLimiterMemory({
+const compileLimiter = new RateLimiterMemory({
     points: 20, // Limit each sessionID to 20 requests
     duration: 60, // For 1 minute
 });
@@ -53,15 +49,15 @@ const session = expSession({
     saveUninitialized: true
 });
 
-// TODO: redirect errors to log file
-app.use(require('cors')({
-    origin: "http://localhost:8080",
+import cors from 'cors'
+app.use(cors({
+    origin: "http://localhost:8080", // TODO: 중복..?
     credentials: true
 }));
-app.use(jsonParser);
+app.use(bodyParser.json()); // TODO: 필요한가??
 app.use(session);
 
-app.use( morgan(morganFormat, {stream : server_logger.stream}) );
+app.use( morgan(morganFormat, {stream : serverLogger.stream}) );
 
 app.post("/compile", async (req, res) => {
     const dir = Math.random().toString(36).substr(2,11);
@@ -71,34 +67,30 @@ app.post("/compile", async (req, res) => {
     try {
         await compileLimiter.consume(req.sessionID);
     } catch (err) {
-        compile_logger.error(err);
+        compileLogger.error(err);
         return res.status(429).send("Too many requests");
     }
 
     try {
-        await compiler.compile(dir, lang, code);
-        res.send({"status": 1, "output": dir});
+        const result = await compiler(dir, lang, code);
+        res.send({"status": result.status, "output": dir});
     } catch (err) {
-        try {
-            await cleanUp(dir);
-        } catch (cleanupErr) {
-            compile_logger.error(cleanupErr);
-        }
-        compile_logger.error(err);
-
-        res.send({"status": 0, "output": err});
+        await cleanUp(dir);
+        compileLogger.error(err);
+        res.send({"status": result.status, "output": result.err});
     }
 })
 
 
-io.use(ioSession(session, {autoSave: true}))
-io.on("connection", async(socket) => {
+socketConnection.use(ioSession(session, {autoSave: true}))
+socketConnection.on("connection", async(socket) => {
     var dir = socket.handshake.query['token'];
     var lang = socket.handshake.query['lang'];
     var sid = socket.handshake.sessionID;
 
-    //Check if given directory exists
-    if(!fs.existsSync(BASE_DIR + dir)) {
+    //TODO: need test
+    if(!(await checkLanguage(lang))) {
+        socket.emit('stdout', "Unsupported Language");
         socket.disconnect();
     }
 
@@ -106,47 +98,35 @@ io.on("connection", async(socket) => {
     try {
         await socketLimiter.consume(sid);
     } catch (err) {
-        run_logger.error(err);
+        await cleanUp(dir);
+        runLogger.error(err);
         socket.emit('stdout', "too many request");
-        try {
-            await cleanUp(dir);
-        } catch (err) {
-            run_logger.error(err);
-        } finally {
-            socket.emit("exited");
-            socket.disconnect();
-        }
+        socket.disconnect();
     }
 
     try {
-        await purifyPath(dir).then((value) => { dir = value; })
-        await checkLanguage(lang).then((value) => { if(!value) throw new Error("Unsupported language"); })
-
-        const shell = pty.spawn("/usr/lib/judger/libjudger.so", makeRunFormat(dir, lang));
-        shell.on('data', (data) => {
+        dir = await purifyPath(dir);
+        const shell = spawn("/usr/lib/judger/libjudger.so", makeRunFormat(dir, lang));
+        shell.onData((data) => {
             socket.emit("stdout", data);
+        });
+        shell.onExit(async () => {
+            await cleanUp(dir);
+            socket.disconnect();
         });
         socket.on("stdin", (input) => {
             shell.write(input + "\n");
         });
-        shell.on("exit", async(code) => {
-            if(dir) {
-                try {
-                    await cleanUp(dir);
-                } catch (err) {
-                    run_logger.error(err);
-                } finally {
-                    socket.emit("exited");
-                    socket.disconnect();
-                }
-            }
-        });
+        socket.on("exit", () => {
+            shell.kill();
+            socket.disconnect(); // TODO: disconnect signal client에서 받음??
+        })
     } catch (err) {
-        run_logger.error(err);
+        runLogger.error(err);
         socket.disconnect();
     }
 });
 
 server.listen(3000, () => {
-    server_logger.info("Server Start Listening on port 3000");
+    serverLogger.info("Server Start Listening on port 3000");
 });

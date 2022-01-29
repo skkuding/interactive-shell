@@ -13,6 +13,8 @@ RUN buildDeps='software-properties-common git libtool cmake python-dev python3-p
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     useradd -u 12001 compiler && useradd -u 12002 server
 
+ENV NODE_ENV production
+
 ADD server /server
 RUN cd /server && npm install
 

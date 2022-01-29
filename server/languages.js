@@ -1,5 +1,5 @@
 var default_env = ["LANG=en_US.UTF-8", "LANGUAGE=en_US:en", "LC_ALL=en_US.UTF-8"]
-module.exports = {
+export default {
     "c" : {
         "compile": {
             "src_name": "main.c",
