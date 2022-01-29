@@ -71,6 +71,7 @@ app.post("/compile", async (req, res) => {
     try {
         await compileLimiter.consume(req.sessionID);
     } catch (err) {
+        compile_logger.error(err);
         return res.status(429).send("Too many requests");
     }
 
@@ -100,11 +101,12 @@ io.on("connection", async(socket) => {
     try {
         await socketLimiter.consume(sid);
     } catch (err) {
+        run_logger.error(err);
         socket.emit('stdout', "too many request");
         try {
             await cleanUp(dir);
         } catch (err) {
-            console.log(err);
+            run_logger.error(err);
         } finally {
             socket.emit("exited");
             socket.disconnect();
