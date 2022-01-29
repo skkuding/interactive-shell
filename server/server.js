@@ -124,16 +124,12 @@ io.on("connection", async(socket) => {
 
         const shell = pty.spawn("/usr/lib/judger/libjudger.so", makeRunFormat(dir, lang));
         shell.on('data', (data) => {
-            console.log("%s", data);
             socket.emit("stdout", data);
         });
         socket.on("stdin", (input) => {
-            console.log("%s", input);
             shell.write(input + "\n");
         });
         shell.on("exit", async(code) => {
-            console.log("child process exited with code " + code);
-            console.log(dir);
             if(dir) {
                 try {
                     await cleanUp(dir);
@@ -152,6 +148,5 @@ io.on("connection", async(socket) => {
 });
 
 server.listen(3000, () => {
-    console.log("Server opened");
     server_logger.info("Server Start Listening on port 3000");
 });
