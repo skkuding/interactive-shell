@@ -15,5 +15,6 @@ services:
       - ./log/compile:/log/compile
       - ./log/run:/log/run
       - ./log/server:/log/server
+      - ./log/system:/log/system
     ports:
     - "0.0.0.0:40000:3000"

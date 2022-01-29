@@ -4,6 +4,7 @@ const LOG_BASE = "/log/"
 const COMPILER_LOG_PATH = LOG_BASE + "compile.log"
 const RUN_LOG_PATH = LOG_BASE + "run.log"
 const SERVER_LOG_PATH = LOG_BASE + "server.log"
+const SYSTEM_LOG_PATH = LOG_BASE + "system.log"
 
 const COMPILE_SUCCESS = 1
 const COMPILE_FAIL = 0
