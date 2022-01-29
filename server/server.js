@@ -90,12 +90,17 @@ app.post("/compile", async (req, res) => {
     }
 })
 
-//TODO: handshake, Run 분리
+
 io.use(ioSession(session, {autoSave: true}))
 io.on("connection", async(socket) => {
     var dir = socket.handshake.query['token'];
     var lang = socket.handshake.query['lang'];
     var sid = socket.handshake.sessionID;
+
+    //Check if given directory exists
+    if(!fs.existsSync(BASE_DIR + dir)) {
+        socket.disconnect();
+    }
 
     //Check Rate Limit socket connection request
     try {
@@ -117,33 +122,29 @@ io.on("connection", async(socket) => {
         await purifyPath(dir).then((value) => { dir = value; })
         await checkLanguage(lang).then((value) => { if(!value) throw new Error("Unsupported language"); })
 
-        if(!fs.existsSync(BASE_DIR + dir)) {
-            socket.disconnect();
-        } else {
-            const shell = pty.spawn("/usr/lib/judger/libjudger.so", makeRunFormat(dir, lang));
-            shell.on('data', (data) => {
-                console.log("%s", data);
-                socket.emit("stdout", data);
-            });
-            socket.on("stdin", (input) => {
-                console.log("%s", input);
-                shell.write(input + "\n");
-            });
-            shell.on("exit", async(code) => {
-                console.log("child process exited with code " + code);
-                console.log(dir);
-                if(dir) {
-                    try {
-                        await cleanUp(dir);
-                    } catch (err) {
-                        run_logger.error(err);
-                    } finally {
-                        socket.emit("exited");
-                        socket.disconnect();
-                    }
+        const shell = pty.spawn("/usr/lib/judger/libjudger.so", makeRunFormat(dir, lang));
+        shell.on('data', (data) => {
+            console.log("%s", data);
+            socket.emit("stdout", data);
+        });
+        socket.on("stdin", (input) => {
+            console.log("%s", input);
+            shell.write(input + "\n");
+        });
+        shell.on("exit", async(code) => {
+            console.log("child process exited with code " + code);
+            console.log(dir);
+            if(dir) {
+                try {
+                    await cleanUp(dir);
+                } catch (err) {
+                    run_logger.error(err);
+                } finally {
+                    socket.emit("exited");
+                    socket.disconnect();
                 }
-            });
-        }
+            }
+        });
     } catch (err) {
         run_logger.error(err);
         socket.disconnect();
