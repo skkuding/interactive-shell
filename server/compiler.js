@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import { systemLogger } from './logger.js';
+import { systemLogger } from "./logger.js";
 import { execSync } from "child_process";
 import { WORKSPACE_BASE, COMPILE_FAIL, COMPILE_SUCCESS } from "./constants.js";
 import languageConfig from "./languages.js";
@@ -18,7 +18,7 @@ async function compiler(directory, lang, code) {
     const exe_path = dir + "/" + languageConfig[lang].compile.exe_name;
     const compile_command = languageConfig[lang].compile.compile_command;
     const command = compile_command.replace("{src_path}", src_path).replace("{exe_path}", exe_path);
-    const result = {'status': COMPILE_FAIL, 'error': '', 'token': ''}
+    const result = {"status": COMPILE_FAIL, "error": "", "token": ""}
 
     try {
         await fs.mkdir(dir, { recursive: true });
@@ -32,7 +32,7 @@ async function compiler(directory, lang, code) {
     try {
         await compile(command);
         result.status = COMPILE_SUCCESS;
-        result.token = directory
+        result.token = directory;
     } catch (err) {
         result.err = err;
     }
@@ -40,4 +40,4 @@ async function compiler(directory, lang, code) {
     return result;
 }
 
-export default compiler
+export default compiler;

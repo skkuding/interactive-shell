@@ -1,33 +1,22 @@
 import express from "express";
-import { createServer } from "http"
-import { Server as socketServer } from "socket.io"
-import { spawn } from "node-pty";
-import bodyParser from 'body-parser'
-import cors from 'cors'
+import bodyParser from "body-parser"
+import cors from "cors"
+import nopt from "nopt";
 import expSession from "express-session";
 import ioSession from "express-socket.io-session";
 import { RateLimiterMemory } from "rate-limiter-flexible";
-import nopt from "nopt";
+import { createServer } from "http"
+import { Server as socketServer } from "socket.io"
+import { spawn } from "node-pty";
 
-import morgan from 'morgan';
-const combined = ':remote-addr ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
-const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined;
-// morgan 출력 형태 server.env에서 NODE_ENV 설정 production : 배포 dev : 개발
-
-import { cleanUp } from "./file_manager.js";
 import compiler from "./compiler.js";
+import { cleanUp } from "./file_manager.js";
 import { purifyPath, makeRunFormat } from "./formatter.js";
-import { serverLogger, compileLogger, runLogger } from './logger.js';
-import { COMPILE_FAIL, languageSupport } from './constants.js'
+import { serverLogger, compileLogger, runLogger } from "./logger.js";
+import { COMPILE_FAIL, languageSupport } from "./constants.js"
 
-const longOpts = {
-    "sessionSecret": String,
-}
-const shortOpts = {
-    "s": ["--sessionSecret"],
-}
-const parsed = nopt(longOpts, shortOpts, process.argv, 2)
 
+// request limiter config
 const socketLimiter = new RateLimiterMemory({
     points: 20, // Limit each sessionID to 20 requests
     duration: 60, // For 1 minute
@@ -36,6 +25,16 @@ const compileLimiter = new RateLimiterMemory({
     points: 20, // Limit each sessionID to 20 requests
     duration: 60, // For 1 minute
 });
+
+
+// session config
+const longOpts = {
+    "sessionSecret": String,
+}
+const shortOpts = {
+    "s": ["--sessionSecret"],
+}
+const parsed = nopt(longOpts, shortOpts, process.argv, 2)
 const session = expSession({
     secret: parsed.sessionSecret,
     resave: false,
@@ -43,6 +42,13 @@ const session = expSession({
 });
 
 
+// server log config
+import morgan from "morgan";
+const combined = ':remote-addr ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"';
+const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined;
+
+
+// server open
 const app = express();
 const server = createServer(app);
 const socketConnection = new socketServer(server, {
@@ -51,15 +57,20 @@ const socketConnection = new socketServer(server, {
         credentials: true
     }
 });
+server.listen(3000, () => {
+    serverLogger.info("Server Start Listening on port 3000");
+});
 
+
+// middlewares
 app.use(cors({
     origin: "http://localhost:8080",
     credentials: true
 }));
 app.use(bodyParser.json());
 app.use(session);
+app.use(morgan(morganFormat, { stream : serverLogger.stream }));
 
-app.use( morgan(morganFormat, {stream : serverLogger.stream}) );
 
 app.post("/compile", async (req, res) => {
     const dir = Math.random().toString(36).substr(2,11);
@@ -67,7 +78,7 @@ app.post("/compile", async (req, res) => {
     const code = req.body.code;
 
     if(!languageSupport.includes(lang)) {
-        return res.send({"status": COMPILE_FAIL, "error": "Unsupported Language", "token": ''});
+        return res.send({"status": COMPILE_FAIL, "error": "Unsupported Language", "token": ""});
     }
 
     try {
@@ -87,12 +98,12 @@ app.post("/compile", async (req, res) => {
 
 socketConnection.use(ioSession(session, {autoSave: true}))
 socketConnection.on("connection", async(socket) => {
-    var dir = socket.handshake.query['token'];
-    var lang = socket.handshake.query['lang'];
+    var dir = socket.handshake.query["token"];
+    var lang = socket.handshake.query["lang"];
     var sid = socket.handshake.sessionID;
 
     if(!languageSupport.includes(lang)) {
-        socket.emit('stdout', "Unsupported Language");
+        socket.emit("stdout", "Unsupported Language");
         socket.disconnect();
     }
 
@@ -102,7 +113,7 @@ socketConnection.on("connection", async(socket) => {
     } catch (err) {
         await cleanUp(dir);
         runLogger.error(err);
-        socket.emit('stdout', "too many request");
+        socket.emit("stdout", "too many request");
         socket.disconnect();
     }
 
@@ -127,8 +138,4 @@ socketConnection.on("connection", async(socket) => {
         runLogger.error(err);
         socket.disconnect();
     }
-});
-
-server.listen(3000, () => {
-    serverLogger.info("Server Start Listening on port 3000");
 });

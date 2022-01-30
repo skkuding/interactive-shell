@@ -1,13 +1,13 @@
-import format from 'winston';
-import WinstonDaily from 'winston-daily-rotate-file';
+import format from "winston";
+import WinstonDaily from "winston-daily-rotate-file";
 import path from "path";
 
 const { combine, timestamp, printf } = format.format;
 
-const SERVER_DIRECTORY = path.resolve('../log/server');
-const COMPILE_DIRECTORY = path.resolve('../log/compile');
-const RUN_DIRECTORY = path.resolve('../log/run');
-const SYSTEM_DIRECTORY = path.resolve('../log/system');
+const SERVER_DIRECTORY = path.resolve("../log/server");
+const COMPILE_DIRECTORY = path.resolve("../log/compile");
+const RUN_DIRECTORY = path.resolve("../log/run");
+const SYSTEM_DIRECTORY = path.resolve("../log/system");
 /*
  * Log Level
  * error: 0, warn: 1, info: 2, http: 3, verbose: 4, debug: 5, silly: 6
@@ -16,68 +16,68 @@ const SYSTEM_DIRECTORY = path.resolve('../log/system');
 class Logger {
     constructor(route) {
         this.route = route
-        if(this.route === 'server'){
+        if(this.route === "server"){
             this.logger = format.createLogger({
                 format: combine(
-                    timestamp({format:'YYYY-MM-DD HH:mm:ss'}),
+                    timestamp({format:"YYYY-MM-DD HH:mm:ss"}),
                     printf(info => `[${info.timestamp}] - [${info.level}] - ${info.message}`)
                 ),
                 transports: [
                     new WinstonDaily({
-                        level: 'info',
-                        datePattern: 'YYYY-MM-DD',
-                        filename: SERVER_DIRECTORY + '/%DATE%.log',
+                        level: "info",
+                        datePattern: "YYYY-MM-DD",
+                        filename: SERVER_DIRECTORY + "/%DATE%.log",
                         maxFiles: 30,
                         zippedArchive: false
                     }),
                 ],
             });
         }
-        if(this.route === 'compile'){
+        if(this.route === "compile"){
             this.logger = format.createLogger({
                 format: combine(
-                    timestamp({format:'YYYY-MM-DD HH:mm:ss'}),
+                    timestamp({format:"YYYY-MM-DD HH:mm:ss"}),
                     printf(info => `[${info.timestamp}] - [${info.level}] - ${info.message}`)
                 ),
                 transports: [
                     new WinstonDaily({
-                        level: 'info',
-                        datePattern: 'YYYY-MM-DD',
-                        filename: COMPILE_DIRECTORY + '/%DATE%.log',
+                        level: "info",
+                        datePattern: "YYYY-MM-DD",
+                        filename: COMPILE_DIRECTORY + "/%DATE%.log",
                         maxFiles: 30,
                         zippedArchive: false
                     }),
                 ],
             });
         }
-        if(this.route === 'run'){
+        if(this.route === "run"){
             this.logger = format.createLogger({
                 format: combine(
-                    timestamp({format:'YYYY-MM-DD HH:mm:ss'}),
+                    timestamp({format:"YYYY-MM-DD HH:mm:ss"}),
                     printf(info => `[${info.timestamp}] - [${info.level}] - ${info.message}`)
                 ),
                 transports: [
                     new WinstonDaily({
-                        level: 'info',
-                        datePattern: 'YYYY-MM-DD',
-                        filename: RUN_DIRECTORY + '/%DATE%.log',
+                        level: "info",
+                        datePattern: "YYYY-MM-DD",
+                        filename: RUN_DIRECTORY + "/%DATE%.log",
                         maxFiles: 30,
                         zippedArchive: false
                     }),
                 ],
             });
         }
-        if(this.route === 'system'){
+        if(this.route === "system"){
             this.logger = format.createLogger({
                 format: combine(
-                    timestamp({format:'YYYY-MM-DD HH:mm:ss'}),
+                    timestamp({format:"YYYY-MM-DD HH:mm:ss"}),
                     printf(info => `[${info.timestamp}] - [${info.level}] - ${info.message}`)
                 ),
                 transports: [
                     new WinstonDaily({
-                        level: 'info',
-                        datePattern: 'YYYY-MM-DD',
-                        filename: SYSTEM_DIRECTORY + '/%DATE%.log',
+                        level: "info",
+                        datePattern: "YYYY-MM-DD",
+                        filename: SYSTEM_DIRECTORY + "/%DATE%.log",
                         maxFiles: 30,
                         zippedArchive: false
                     }),
@@ -88,7 +88,7 @@ class Logger {
 
     stream = {
         write: message => {
-            this.logger.info(message);
+            this.logger.info(message)
         }
     }
 

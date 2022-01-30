@@ -3,7 +3,7 @@ import { WORKSPACE_BASE } from "./constants.js";
 
 export function purifyPath (dir) {
     return new Promise(resolve => {
-        resolve(dir.replace(/[^a-zA-Z0-9]/g, ""))
+        resolve(dir.replace(/[^a-zA-Z0-9]/g, ""));
     })
 }
 
@@ -15,9 +15,9 @@ export function makeRunFormat (directory, lang) {
     const run_config = languageConfig[lang].run;
     const seccomp_rule = "--seccomp_rule_name=" + run_config.seccomp_rule;
     const env = "--env=" + run_config.env;
-    const max_cpu_time = "--max_cpu_time=" + String(60*1000)
-    const max_real_time = "--max_real_time=" + String(60*1000)
-    const max_memory = "--max_memory=" + String(256*1024*1024)
+    const max_cpu_time = "--max_cpu_time=" + String(60*1000);
+    const max_real_time = "--max_real_time=" + String(60*1000);
+    const max_memory = "--max_memory=" + String(256*1024*1024);
     let dir = directory;
     let exe_path = WORKSPACE_BASE + dir + "/" + exe_name;
     if (lang === "py2") {
