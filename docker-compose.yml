@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   coderunner:
-    image: coc0a25/code-runner:test
+    image: coc0a25/code-runner:0.3
     container_name: coderunner-dev
     restart: always
     cap_drop:
