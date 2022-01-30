@@ -84,12 +84,12 @@ class Logger {
                 ],
             })
         }
+    }
 
-        this.logger.stream = {
-            write: message => {
-                this.logger.info(message);
-            }
-        } 
+    stream = {
+        write: message => {
+            this.logger.info(message);
+        }
     }
 
     info(message){

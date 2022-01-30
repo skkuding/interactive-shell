@@ -10,7 +10,7 @@ import { RateLimiterMemory } from "rate-limiter-flexible";
 import nopt from "nopt";
 
 import morgan from 'morgan';
-const combined = ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
+const combined = ':remote-addr ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
 const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined;
 // morgan 출력 형태 server.env에서 NODE_ENV 설정 production : 배포 dev : 개발
 
