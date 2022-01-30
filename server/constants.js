@@ -8,3 +8,5 @@ export const SYSTEM_LOG_PATH = LOG_BASE + "system.log"
 
 export const COMPILE_SUCCESS = 1
 export const COMPILE_FAIL = 0
+
+export const languageSupport = ["c", "cpp", "py2", "py3"]

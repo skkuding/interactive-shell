@@ -1,4 +1,4 @@
-var default_env = ["LANG=en_US.UTF-8", "LANGUAGE=en_US:en", "LC_ALL=en_US.UTF-8"]
+const default_env = ["LANG=en_US.UTF-8", "LANGUAGE=en_US:en", "LC_ALL=en_US.UTF-8"]
 export default {
     "c" : {
         "compile": {
@@ -52,7 +52,7 @@ export default {
     "py3" : {
         "compile": {
             "src_name": "solution.py",
-            "exe_name": "__pycache__/solution.cpython-36.pyc",
+            "exe_name": "__pycache__/solution.cpython-38.pyc",
             "compile_command": "/usr/bin/python3 -m py_compile {src_path}",
         },
         "run": {

@@ -1,17 +1,9 @@
 import express from "express";
 import { createServer } from "http"
 import { Server as socketServer } from "socket.io"
-const app = express();
-const server = createServer(app);
-
-const socketConnection = new socketServer(server, {
-    cors: {
-        origin: "http://localhost:8080",
-        credentials: true
-    }
-});
 import { spawn } from "node-pty";
 import bodyParser from 'body-parser'
+import cors from 'cors'
 import expSession from "express-session";
 import ioSession from "express-socket.io-session";
 import { RateLimiterMemory } from "rate-limiter-flexible";
@@ -24,8 +16,9 @@ const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined;
 
 import { cleanUp } from "./file_manager.js";
 import compiler from "./compiler.js";
-import { purifyPath, makeRunFormat, checkLanguage } from "./formatter.js";
+import { purifyPath, makeRunFormat } from "./formatter.js";
 import { serverLogger, compileLogger, runLogger } from './logger.js';
+import { COMPILE_FAIL, languageSupport } from './constants.js'
 
 const longOpts = {
     "sessionSecret": String,
@@ -49,12 +42,21 @@ const session = expSession({
     saveUninitialized: true
 });
 
-import cors from 'cors'
+
+const app = express();
+const server = createServer(app);
+const socketConnection = new socketServer(server, {
+    cors: {
+        origin: "http://localhost:8080",
+        credentials: true
+    }
+});
+
 app.use(cors({
-    origin: "http://localhost:8080", // TODO: 중복..?
+    origin: "http://localhost:8080",
     credentials: true
 }));
-app.use(bodyParser.json()); // TODO: 필요한가??
+app.use(bodyParser.json());
 app.use(session);
 
 app.use( morgan(morganFormat, {stream : serverLogger.stream}) );
@@ -64,6 +66,10 @@ app.post("/compile", async (req, res) => {
     const lang = req.body.lang;
     const code = req.body.code;
 
+    if(!languageSupport.includes(lang)) {
+        return res.send({"status": COMPILE_FAIL, "error": "Unsupported Language", "token": ''});
+    }
+
     try {
         await compileLimiter.consume(req.sessionID);
     } catch (err) {
@@ -71,14 +77,11 @@ app.post("/compile", async (req, res) => {
         return res.status(429).send("Too many requests");
     }
 
-    try {
-        const result = await compiler(dir, lang, code);
-        res.send({"status": result.status, "output": dir});
-    } catch (err) {
+    const result = await compiler(dir, lang, code);
+    if (result.status === COMPILE_FAIL) {
         await cleanUp(dir);
-        compileLogger.error(err);
-        res.send({"status": result.status, "output": result.err});
     }
+    return res.send(result);
 })
 
 
@@ -88,8 +91,7 @@ socketConnection.on("connection", async(socket) => {
     var lang = socket.handshake.query['lang'];
     var sid = socket.handshake.sessionID;
 
-    //TODO: need test
-    if(!(await checkLanguage(lang))) {
+    if(!languageSupport.includes(lang)) {
         socket.emit('stdout', "Unsupported Language");
         socket.disconnect();
     }
@@ -119,7 +121,7 @@ socketConnection.on("connection", async(socket) => {
         });
         socket.on("exit", () => {
             shell.kill();
-            socket.disconnect(); // TODO: disconnect signal client에서 받음??
+            socket.disconnect();
         })
     } catch (err) {
         runLogger.error(err);
