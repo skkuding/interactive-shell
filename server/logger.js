@@ -110,5 +110,3 @@ export const serverLogger = new Logger("server")
 export const compileLogger = new Logger("compile")
 export const runLogger = new Logger("run")
 export const systemLogger = new Logger("system")
-
-export default {serverLogger, compileLogger, runLogger, systemLogger}

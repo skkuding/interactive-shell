@@ -7,13 +7,7 @@ export function purifyPath (dir) {
     })
 }
 
-export function checkLanguage (lang) {
-    return new Promise(resolve => {
-        resolve(["c", "cpp", "py2", "py3"].includes(lang));
-    })
-}
 
-// TODO: Add limits
 // TODO: Add settings for java
 // TODO: Set python env
 export function makeRunFormat (directory, lang) {

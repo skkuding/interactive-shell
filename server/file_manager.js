@@ -7,6 +7,6 @@ export async function cleanUp(directory) {
     try {
         await fs.rm(dir, { recursive: true, force: true });
     } catch (err) {
-        systemLogger.error(err.name + ": " + err.message)
+        systemLogger.error(err)
     }
 }
