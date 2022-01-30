@@ -2,8 +2,10 @@ FROM ubuntu:20.04
 
 COPY sandbox /sandbox
 COPY sources.list /etc/apt/
+
 ENV TZ=Asia/Seoul
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN buildDeps='software-properties-common git libtool cmake python-dev python3-pip libseccomp-dev curl' && \
     apt-get update && apt-get install -y python python3 python-pkg-resources python3-pkg-resources $buildDeps && \
     add-apt-repository ppa:ubuntu-toolchain-r/test && \
@@ -19,11 +21,11 @@ RUN buildDeps='software-properties-common git libtool cmake python-dev python3-p
 ENV NODE_ENV production
 
 COPY server /server
+RUN mkdir -p /code && mkdir -p /log
 
 # run docker as non root user
 # RUN groupadd -g 61000 server && \
 #     useradd -g 61000 -l -M -s /bin/false -u 61000 server && \
-#     mkdir -p /code && mkdir -p /log && \
 #     chmod -R 755 /code && \
 #     chmod -R 755 /log && \
 #     chmod -R 755 /sandbox && \
