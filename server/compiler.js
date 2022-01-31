@@ -25,7 +25,7 @@ async function compiler(directory, lang, code) {
         await fs.writeFile(src_path, code);
     } catch (err) {
         systemLogger.error(err);
-        result.err = "server error"
+        result.error = "server error"
         return result;
     }
 
@@ -34,7 +34,7 @@ async function compiler(directory, lang, code) {
         result.status = COMPILE_SUCCESS;
         result.token = directory;
     } catch (err) {
-        result.err = err;
+        result.error = err;
     }
 
     return result;
