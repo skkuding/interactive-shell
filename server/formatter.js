@@ -18,15 +18,12 @@ export function makeRunFormat (directory, lang) {
     const max_cpu_time = "--max_cpu_time=" + String(60*1000);
     const max_real_time = "--max_real_time=" + String(60*1000);
     const max_memory = "--max_memory=" + String(256*1024*1024);
-    let dir = directory;
-    let exe_path = WORKSPACE_BASE + dir + "/" + exe_name;
+    const exe_path = WORKSPACE_BASE + directory + "/" + exe_name;
     if (lang === "py2") {
         return ["--exe_path=/usr/bin/python2", "--args="+exe_path, max_cpu_time, max_real_time, max_memory, seccomp_rule];
     }
     if (lang === "py3") {
         return ["--exe_path=/usr/bin/python3", "--args="+exe_path, max_cpu_time, max_real_time, max_memory, seccomp_rule];
     }
-    exe_path = "--exe_path=" + exe_path;
-
-    return [exe_path, max_cpu_time, max_real_time, max_memory, seccomp_rule, env];
+    return ["--exe_path="+exe_path, max_cpu_time, max_real_time, max_memory, seccomp_rule, env];
 }
