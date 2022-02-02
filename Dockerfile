@@ -7,7 +7,7 @@ ENV TZ=Asia/Seoul
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN buildDeps='software-properties-common git libtool cmake python-dev python3-pip libseccomp-dev curl' && \
-    apt-get update && apt-get install -y python python3 python-pkg-resources python3-pkg-resources $buildDeps && \
+    apt-get update && apt-get install -y build-essential python python3 python-pkg-resources python3-pkg-resources $buildDeps && \
     add-apt-repository ppa:ubuntu-toolchain-r/test && \
     add-apt-repository ppa:openjdk-r/ppa && \
     curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
