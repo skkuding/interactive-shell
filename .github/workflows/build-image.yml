@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-image:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout to repository
@@ -20,11 +20,11 @@ jobs:
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
-          username: cyw320712 
+          username: cranemont
           password: ${{ secrets.CR_PAT }}
 
       - name: Build and push docker image
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/skku-npc/code-runner:latest
+          tags: ghcr.io/skkuding/code-runner:latest
